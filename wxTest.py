@@ -30,8 +30,8 @@ class Mywin(wx.Frame):
         nmbox.Add(self.nm2, 0, wx.ALL | wx.CENTER, 5)
         nmbox.Add(self.b, 0, wx.ALL | wx.CENTER, 5)
         #Bind
-        # self.Bind(wx.EVT_BUTTON, self.OnButton, b)
-        self.b.Bind(wx.EVT_BUTTON, self.OnButton)
+        self.Bind(wx.EVT_BUTTON, self.OnButton, self.b)
+        # self.b.Bind(wx.EVT_BUTTON, self.OnButton)
         # 在StaticBoxSizer添加进水平盒子
         nmSizer.Add(nmbox, 0, wx.ALL | wx.CENTER, 10)
 
@@ -47,8 +47,8 @@ class Mywin(wx.Frame):
         # StaticBoxSizer盒子添加水平盒子
 
     def OnButton(self, event):
-        dlg = wx.MultiChoiceDialog(self)
-        # dlg = wx.FileDialog(self, '选择文件夹', style= wx.FD_MULTIPLE | wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
+        # dlg = wx.MultiChoiceDialog(self)
+        dlg = wx.FileDialog(self, '选择文件夹', style= wx.FD_MULTIPLE | wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
         if dlg.ShowModal() == wx.ID_OK:
             filelist = dlg.GetPaths()
             self.nm2.SetValue(filelist[0])
