@@ -426,8 +426,6 @@ class DarkCurrentPage(wx.Panel):
 class PRNUPage(wx.Panel):
     pass
 
-class PageTwo(wx.Panel):
-    pass
 
 if __name__ == '__main__':
     app = wx.App()
