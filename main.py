@@ -139,6 +139,10 @@ class MainFrame(wx.Frame):
         self.Boxv2.Add(self.DownNoteBook, 1, wx.EXPAND | wx.ALL, 10)
         self.DownPanel.SetSizer(self.Boxv2)
 
+        # 绑定事件 （PTC，gain，prnu，readoutNoise）
+        self.Bind(wx.EVT_BUTTON, self.OnButton, gain_rdnPage.rdn_button3)
+
+
     def OnButton_Preview(self, Event):
         filepath = self.fViewCtrl.GetPath()
         dtype = self.sf_dtypeCtrl.GetValue()
@@ -172,11 +176,11 @@ class MainFrame(wx.Frame):
             self.fp_textCtrl2.SetValue(dlg.GetPath())
             dlg.Destroy()
 
-
+    def OnButton(self, EVENT):
+        print(self.roiTrigger.GetValue())
 
 class GainAndReadoutNoisePage(wx.Panel):
     def __init__(self, parent):
-        # super(ReadoutNoisePage, self).__init__(parent)
         wx.Panel.__init__(self,parent)
         self.Box = wx.BoxSizer(wx.HORIZONTAL)
         # 创建gain 组件
@@ -236,6 +240,7 @@ class GainAndReadoutNoisePage(wx.Panel):
         self.Box.Add(self.gainBoxSizer, 1, wx.EXPAND |wx.ALL, 10)
         self.Box.Add(self.rdnBoxSizer, 1, wx.EXPAND |wx.ALL, 10)
         self.SetSizer(self.Box)
+
 
 class PTCPage(wx.Panel):
     def __init__(self, parent):
