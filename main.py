@@ -10,8 +10,8 @@ class MainFrame(wx.Frame):
         self.Init_UpPanel()
         self.Init_DownPanel()
         # 将二级垂直盒子添加到一级水平盒子
-        self.Boxv1.Add(self.UpPanel, proportion = 1, border = 2, flag = wx.ALL | wx.EXPAND)
-        self.Boxv1.Add(self.DownPanel, proportion = 2, border = 2, flag = wx.ALL | wx.EXPAND)
+        self.Boxv1.Add(self.UpPanel, border = 2, flag = wx.ALL | wx.EXPAND)
+        self.Boxv1.Add(self.DownPanel, border = 2, flag = wx.ALL | wx.EXPAND)
         # 将水平盒子和主框架关联
         self.SetSizer(self.Boxv1)
         self.Fit()
@@ -25,7 +25,7 @@ class MainFrame(wx.Frame):
     def Init_Box(self):
         # #一个垂直盒子
         self.Boxv1 = wx.BoxSizer(wx.VERTICAL)
-        self.Boxv2 = wx.BoxSizer(wx.VERTICAL)
+        # self.Boxv2 = wx.BoxSizer(wx.VERTICAL)
 
     def Init_UpPanel(self):
         '''
@@ -125,6 +125,41 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnButton_Preview, self.fViewButton)
 
     def Init_DownPanel(self):
+        self.DownBoxh = wx.BoxSizer(wx.HORIZONTAL)
+
+        #创建文件路径 静态文本框
+        self.fileBox = wx.StaticBox(self.DownPanel,-1,"文件路径")
+        self.fileBoxSizer = wx.StaticBoxSizer(self.fileBox, wx.VERTICAL)
+
+        self.fileSizer = wx.GridBagSizer(0, 0)
+        self.file_FileText1  = wx.StaticText(self.DownPanel, -1, "本底场图像")
+        self.file_textCtrl1 = wx.TextCtrl(self.DownPanel, -1, style= wx.TE_MULTILINE| wx.HSCROLL)
+        self.file_button1 = wx.Button(self.DownPanel, -1, "打开文件")
+        self.file_button2 = wx.Button(self.DownPanel, -1, "打开文件夹")
+        self.file_FileText2  = wx.StaticText(self.DownPanel, -1, "平场图像")
+        self.file_textCtrl2 = wx.TextCtrl(self.DownPanel, -1, style= wx.TE_MULTILINE | wx.HSCROLL)
+        self.file_button3 = wx.Button(self.DownPanel, -1, "打开文件")
+        self.file_button4 = wx.Button(self.DownPanel, -1, "打开文件夹")
+        self.file_FileText3  = wx.StaticText(self.DownPanel, -1, "暗场图像")
+        self.file_textCtrl3 = wx.TextCtrl(self.DownPanel, -1, style= wx.TE_MULTILINE| wx.HSCROLL)
+        self.file_button5 = wx.Button(self.DownPanel, -1, "打开文件")
+        self.file_button6 = wx.Button(self.DownPanel, -1, "打开文件夹")
+
+        self.fileSizer.Add(self.file_FileText1, pos=(0,0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.fileSizer.Add(self.file_textCtrl1, pos=(1,0), span=(5,15),flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_button1,  pos=(1,16), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_button2,  pos=(2,16), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_FileText2, pos=(6,0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.fileSizer.Add(self.file_textCtrl2, pos=(7,0), span=(5,15), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_button3, pos=(7,16), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_button4, pos=(8,16), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_FileText3, pos=(12,0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.fileSizer.Add(self.file_textCtrl3, pos=(13,0), span=(5, 15), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_button5, pos=(13,16), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileSizer.Add(self.file_button6, pos=(14,16), flag=wx.ALL | wx.EXPAND, border=3)
+        self.fileBoxSizer.Add(self.fileSizer, 1, wx.EXPAND | wx.ALL, 0)
+
+        # 创建标签页
         self.DownNoteBook = wx.Notebook(self.DownPanel, style=wx.NB_FIXEDWIDTH)
         gain_rdnPage = GainAndReadoutNoisePage(self.DownNoteBook)
         ptcPage = PTCPage(self.DownNoteBook)
@@ -136,12 +171,20 @@ class MainFrame(wx.Frame):
         self.DownNoteBook.AddPage(darkcurrentPage, "暗电流")
         self.DownNoteBook.AddPage(prnuPage, "PRNU")
         
-        self.Boxv2.Add(self.DownNoteBook, 1, wx.EXPAND | wx.ALL, 10)
-        self.DownPanel.SetSizer(self.Boxv2)
+        # self.Boxv2.Add(self.DownNoteBook, 1, wx.EXPAND | wx.ALL, 10)
+        # self.DownPanel.SetSizer(self.Boxv2)
+        self.DownBoxh.Add(self.fileBoxSizer, 1, wx.EXPAND |wx.ALL, 10)
+        self.DownBoxh.Add(self.DownNoteBook, 1, wx.EXPAND | wx.ALL, 10)
+        self.DownPanel.SetSizer(self.DownBoxh)
 
         # 绑定事件 （PTC，gain，prnu，readoutNoise）
         self.Bind(wx.EVT_BUTTON, self.OnButton, gain_rdnPage.rdn_button3)
-
+        self.Bind(wx.EVT_BUTTON, self.OnButton_Flat_OpenFile, self.file_button3)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_Flat_OpenDir, self.file_button4)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_Bias_OpenFile, self.file_button1)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_Bias_OpenDir, self.file_button2)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenFile, self.file_button5)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenDir, self.file_button6)
 
     def OnButton_Preview(self, Event):
         filepath = self.fViewCtrl.GetPath()
@@ -151,30 +194,64 @@ class MainFrame(wx.Frame):
         height = int(self.sf_heightCtrl.GetValue())
         draw.preview(filepath,dtype,width,height,skip)
 
+    def OnButton_OpenFile(self):
+        dlg = wx.FileDialog(self, '选择文件', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR | wx.FD_MULTIPLE)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPaths()
+            dlg.Destroy()
+            return path
+
+    def OnButton_OpenDir(self):
+        dlg = wx.DirDialog(self, '选择文件夹', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
+        if dlg.ShowModal() == wx.ID_OK:
+            path =  dlg.GetPath()
+            dlg.Destroy()
+            return path
 
     def OnButton_Flat_OpenFile(self, Event):
-        dlg = wx.FileDialog(self, '选择文件', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.fp_textCtrl1.SetValue(dlg.GetPath())
-            dlg.Destroy()
-
-    def OnButton_Bias_OpenFile(self, Event):
-        dlg = wx.FileDialog(self, '选择文件', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.fp_textCtrl2.SetValue(dlg.GetPath())
-            dlg.Destroy()
+        paths = self.OnButton_OpenFile()
+        if paths:
+            self.file_textCtrl2.Clear()
+            for path in paths:
+                self.file_textCtrl2.AppendText(path+'\n')
+            self.flatfilePath = paths
 
     def OnButton_Flat_OpenDir(self, Event):
-        dlg = wx.DirDialog(self, '选择文件夹', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.fp_textCtrl1.SetValue(dlg.GetPath())
-            dlg.Destroy()
+        path = self.OnButton_OpenDir()
+        if path:
+            self.file_textCtrl2.Clear()
+            self.file_textCtrl2.SetValue(path)
+            self.flatfilePath = path
+
+    def OnButton_Bias_OpenFile(self, Event):
+        paths = self.OnButton_OpenFile()
+        if paths:
+            self.file_textCtrl1.Clear()
+            for path in paths:
+                self.file_textCtrl1.AppendText(path+'\n')
+            self.biastfilePath = paths
 
     def OnButton_Bias_OpenDir(self, Event):
-        dlg = wx.DirDialog(self, '选择文件夹', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.fp_textCtrl2.SetValue(dlg.GetPath())
-            dlg.Destroy()
+        path = self.OnButton_OpenDir()
+        if path:
+            self.file_textCtrl1.Clear()
+            self.file_textCtrl1.SetValue(path)
+            self.biastfilePath = path
+
+    def OnButton_Dark_OpenFile(self, Event):
+        paths = self.OnButton_OpenFile()
+        if paths:
+            self.file_textCtrl3.Clear()
+            for path in paths:
+                self.file_textCtrl3.AppendText(path + '\n')
+            self.darkfilePath = paths
+
+    def OnButton_Dark_OpenDir(self, Event):
+        path = self.OnButton_OpenDir()
+        if path:
+            self.file_textCtrl3.Clear()
+            self.file_textCtrl3.SetValue(path)
+            self.darkfilePath = path
 
     def OnButton(self, EVENT):
         print(self.roiTrigger.GetValue())
@@ -182,65 +259,42 @@ class MainFrame(wx.Frame):
 class GainAndReadoutNoisePage(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self,parent)
-        self.Box = wx.BoxSizer(wx.HORIZONTAL)
+        self.Box = wx.BoxSizer(wx.VERTICAL)
         # 创建gain 组件
         self.gainBox = wx.StaticBox(self,-1,"Gain计算")
         self.gainBoxSizer = wx.StaticBoxSizer(self.gainBox, wx.VERTICAL)
         self.gainSizer = wx.GridBagSizer(0, 0)
-        self.gain_FileText1  = wx.StaticText(self, -1, "本底场图像")
-        self.gain_textCtrl1 = wx.TextCtrl(self, -1, style= wx.TE_MULTILINE)
-        self.gain_button1 = wx.Button(self, -1, "打开文件")
-        self.gain_button2 = wx.Button(self, -1, "打开文件夹")
-        self.gain_FileText2  = wx.StaticText(self, -1, "平场图像")
-        self.gain_textCtrl2 = wx.TextCtrl(self, -1, style= wx.TE_MULTILINE)
-        self.gain_button3 = wx.Button(self, -1, "打开文件")
-        self.gain_button4 = wx.Button(self, -1, "打开文件夹")
+
         self.gain_FileText3 = wx.StaticText(self, -1, "增益（e-/ADU)")
         self.gain_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
         self.gain_button5 = wx.Button(self, -1, "计算...")
 
-        self.gainSizer.Add(self.gain_FileText1, pos=(0,0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.gainSizer.Add(self.gain_textCtrl1, pos=(1,0), span=(3,5),flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_button1,  pos=(1,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_button2,  pos=(2,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_FileText2, pos=(4,0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.gainSizer.Add(self.gain_textCtrl2, pos=(5,0), span=(3, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_button3, pos=(5,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_button4, pos=(6,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_FileText3, pos=(8,0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_textCtrl3, pos=(9,0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_button5, pos=(9,1), flag=wx.ALL | wx.EXPAND, border=3)
+        self.gainSizer.Add(self.gain_FileText3, pos=(0,0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.gainSizer.Add(self.gain_textCtrl3, pos=(1,0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.gainSizer.Add(self.gain_button5, pos=(1,1), flag=wx.ALL | wx.EXPAND, border=3)
         self.gainBoxSizer.Add(self.gainSizer, 1, wx.EXPAND | wx.ALL, 0)
 
         # 创建readout Noise 组件
         self.rdnBox = wx.StaticBox(self,-1,"读出噪声计算")
         self.rdnBoxSizer = wx.StaticBoxSizer(self.rdnBox, wx.VERTICAL)
         self.rdnSizer = wx.GridBagSizer(0, 0)
-        self.rdn_FileText1  = wx.StaticText(self, -1, "本底场图像")
-        self.rdn_textCtrl1 = wx.TextCtrl(self, -1, style= wx.TE_MULTILINE)
-        self.rdn_button1 = wx.Button(self, -1, "打开文件")
-        self.rdn_button2 = wx.Button(self, -1, "打开文件夹")
+
         self.rdn_FileText2 = wx.StaticText(self, -1, "增益（e-/ADU)")
         self.rdn_textCtrl2 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
         self.rdn_FileText3 = wx.StaticText(self, -1, "读出噪声结果 (e-)")
         self.rdn_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.rdn_button3 = wx.Button(self, -1, "计算...")
 
-        self.rdnSizer.Add(self.rdn_FileText1, pos=(0,0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.rdnSizer.Add(self.rdn_textCtrl1, pos=(1,0), span=(3,5),flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_button1,  pos=(1,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_button2,  pos=(2,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_FileText2, pos=(5, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_textCtrl2, pos=(6, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_FileText3, pos=(5, 1), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_textCtrl3, pos=(6, 1), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_button3, pos=(6, 2), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_FileText2, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_textCtrl2, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_FileText3, pos=(2, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_textCtrl3, pos=(3, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_button3, pos=(3, 1), flag=wx.ALL | wx.EXPAND, border=3)
         self.rdnBoxSizer.Add(self.rdnSizer, 1, wx.EXPAND | wx.ALL, 0)
 
         self.Box.Add(self.gainBoxSizer, 1, wx.EXPAND |wx.ALL, 10)
         self.Box.Add(self.rdnBoxSizer, 1, wx.EXPAND |wx.ALL, 10)
         self.SetSizer(self.Box)
-
 
 class PTCPage(wx.Panel):
     def __init__(self, parent):
@@ -248,41 +302,26 @@ class PTCPage(wx.Panel):
         # wx.Panel.__init__(self,parent)
         # 创建PTC 组件
         self.ptcSizer = wx.GridBagSizer(0, 0)
-        self.ptc_FileText1 = wx.StaticText(self, -1, "本底场图像")
-        self.ptc_FileText2 = wx.StaticText(self, -1, "平场图像")
         self.ptc_FileText3 = wx.StaticText(self, -1, "增益 (e-/ADU)")
         self.ptc_FileText4 = wx.StaticText(self, -1, "读出噪声 (e-)")
         self.ptc_FileText5 = wx.StaticText(self, -1, "满阱电荷（e-)")
         self.ptc_FileText6 = wx.StaticText(self, -1, "PTC 非线性度")
-        self.ptc_textCtrl1 = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
-        self.ptc_textCtrl2 = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
         self.ptc_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
         self.ptc_textCtrl4 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
         self.ptc_textCtrl5 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
         self.ptc_textCtrl6 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
-        self.ptc_button1 = wx.Button(self, -1, "打开文件")
-        self.ptc_button2 = wx.Button(self, -1, "打开文件夹")
-        self.ptc_button3 = wx.Button(self, -1, "打开文件")
-        self.ptc_button4 = wx.Button(self, -1, "打开文件夹")
+
         self.ptc_button5 = wx.Button(self,- 1, "计算...")
 
-        self.ptcSizer.Add(self.ptc_FileText1, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_FileText2, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_FileText3, pos=(10, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_FileText4, pos=(10, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_FileText5, pos=(10, 2), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_FileText6, pos=(10, 3), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_textCtrl1, pos=(1, 0), span=(4,5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_textCtrl2, pos=(6, 0), span=(4,5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_textCtrl3, pos=(11, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_textCtrl4, pos=(11, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_textCtrl5, pos=(11, 2), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_textCtrl6, pos=(11, 3), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_button1, pos=(1, 5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_button2, pos=(1, 6), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_button3, pos=(6, 5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_button4, pos=(6, 6), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_button5, pos=(11, 4), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_FileText3, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_FileText4, pos=(0, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_FileText5, pos=(2, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_FileText6, pos=(2, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_textCtrl3, pos=(1, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_textCtrl4, pos=(1, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_textCtrl5, pos=(3, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_textCtrl6, pos=(3, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_button5, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
 
         self.SetSizer(self.ptcSizer)
 
@@ -292,47 +331,32 @@ class DarkCurrentPage(wx.Panel):
         # wx.Panel.__init__(self,parent)
         # 创建darkcurrent 组件
         self.darkcurrentSizer = wx.GridBagSizer(0, 0)
-        self.dc_FileText1 = wx.StaticText(self, -1, "本底场图像")
-        self.dc_FileText2 = wx.StaticText(self, -1, "暗场图像")
+
         self.dc_FileText3 = wx.StaticText(self, -1, "增益 (e-/ADU)")
         self.dc_FileText4 = wx.StaticText(self, -1, "暗电流 (e-)")
         self.dc_FileText5 = wx.StaticText(self, -1, "热像元数量")
         self.dc_FileText6 = wx.StaticText(self, -1, "热像元比例")
         self.dc_FileText7 = wx.StaticText(self, -1, "热像元行/列")
-        self.dc_textCtrl1 = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
-        self.dc_textCtrl2 = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
+
         self.dc_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
         self.dc_textCtrl4 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.dc_textCtrl5 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.dc_textCtrl6 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.dc_textCtrl7 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
-        self.dc_button1 = wx.Button(self, -1, "打开文件")
-        self.dc_button2 = wx.Button(self, -1, "打开文件夹")
-        self.dc_button3 = wx.Button(self, -1, "打开文件")
-        self.dc_button4 = wx.Button(self, -1, "打开文件夹")
+
         self.dc_button5 = wx.Button(self, - 1, "计算...")
 
-        self.darkcurrentSizer.Add(self.dc_FileText1, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl1, pos=(1, 0), span=(4,5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.darkcurrentSizer.Add(self.dc_button1, pos=(1, 5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_button2, pos=(1, 6), flag=wx.EXPAND | wx.ALL, border=3)
-
-        self.darkcurrentSizer.Add(self.dc_FileText2, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl2, pos=(6,0), span=(4,5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_button3, pos=(6, 5), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_button4, pos=(6, 6), flag=wx.EXPAND | wx.ALL, border=3)
-
-        self.darkcurrentSizer.Add(self.dc_FileText3, pos=(10, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText4, pos=(10, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText5, pos=(10, 2), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText6, pos=(10, 3), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText7, pos=(10, 4), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl3, pos=(11, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl4, pos=(11, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl5, pos=(11, 2), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl6, pos=(11, 3), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl7, pos=(11, 4), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_button5, pos=(11, 5), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_FileText3, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_FileText4, pos=(2, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_FileText5, pos=(2, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_FileText6, pos=(4, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_FileText7, pos=(4, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_textCtrl3, pos=(1, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_textCtrl4, pos=(3, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_textCtrl5, pos=(3, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_textCtrl6, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_textCtrl7, pos=(5, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkcurrentSizer.Add(self.dc_button5, pos=(1, 1), flag=wx.EXPAND | wx.ALL, border=3)
 
         self.SetSizerAndFit(self.darkcurrentSizer)
 
@@ -342,29 +366,14 @@ class PRNUPage(wx.Panel):
         wx.Panel.__init__(self, parent)
         # 创建prnu 组件
         self.prnuSizer = wx.GridBagSizer(0, 0)
-        self.prnu_FileText1 = wx.StaticText(self, -1, "本底场图像")
-        self.prnu_textCtrl1 = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
-        self.prnu_button1 = wx.Button(self, -1, "打开文件")
-        self.prnu_button2 = wx.Button(self, -1, "打开文件夹")
-        self.prnu_FileText2 = wx.StaticText(self, -1, "平场图像")
-        self.prnu_textCtrl2 = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
-        self.prnu_button3 = wx.Button(self, -1, "打开文件")
-        self.prnu_button4 = wx.Button(self, -1, "打开文件夹")
+
         self.prnu_FileText3 = wx.StaticText(self, -1, "PRNU")
         self.prnu_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.prnu_button5 = wx.Button(self, -1, "计算...")
 
-        self.prnuSizer.Add(self.prnu_FileText1, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.prnuSizer.Add(self.prnu_textCtrl1, pos=(1, 0), span=(3, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_button1, pos=(1, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_button2, pos=(2, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_FileText2, pos=(4, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.prnuSizer.Add(self.prnu_textCtrl2, pos=(5, 0), span=(3, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_button3, pos=(5, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_button4, pos=(6, 5), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_FileText3, pos=(8, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_textCtrl3, pos=(9, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_button5, pos=(9, 1), flag=wx.ALL | wx.EXPAND, border=3)
+        self.prnuSizer.Add(self.prnu_FileText3, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.prnuSizer.Add(self.prnu_textCtrl3, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.prnuSizer.Add(self.prnu_button5, pos=(1, 1), flag=wx.ALL | wx.EXPAND, border=3)
         self.SetSizer(self.prnuSizer)
 
 if __name__ == '__main__':
