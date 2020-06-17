@@ -1,7 +1,9 @@
 import wx
+import os
 import core.draw as draw
 import core.load as load
-import os
+import core.item as items
+
 
 class MainFrame(wx.Frame):
     def __init__(self, parent,title):
@@ -107,6 +109,11 @@ class MainFrame(wx.Frame):
         self.roi_heightCtrl = wx.TextCtrl(self.UpPanel, -1, style=wx.ALIGN_LEFT)
         self.roiBoxh4.Add(self.roi_widthCtrl, 0, wx.ALL | wx.CENTER, 3)
         self.roiBoxh4.Add(self.roi_heightCtrl, 0, wx.ALL | wx.CENTER, 3)
+
+        self.roi_widthCtrl.SetValue("512")
+        self.roi_heightCtrl.SetValue("512")
+        self.roi_vOffsetCtrl.SetValue("256")
+        self.roi_hOffsetCtrl.SetValue("256")
 
         self.roiBoxSizer.Add(self.roiBoxh1, 0, wx.ALL | wx.EXPAND, 0)
         self.roiBoxSizer.Add(self.roiBoxh2, 0, wx.ALL | wx.EXPAND, 0)
@@ -257,13 +264,14 @@ class MainFrame(wx.Frame):
             return
 
         if not self.gain_rdnPage.rdn_textCtrl1.GetValue():
-            dlg = wx.MessageDialog(None, "请输入增益参数！", caption="警告", style=wx.OK)
+            dlg = wx.MessageDialog(None, "请输入参数： 增益 ", caption="警告", style=wx.OK)
             dlg.ShowModal()
             return
+        gain = float(self.gain_rdnPage.rdn_textCtrl1.GetValue())
+        res = items.ReadoutNoiseProcess(self, self.biasfilePath, gain)
 
-        # load.getData(self, self.biasfilePath)
-
-
+        # 显示结果
+        self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
 
 
 class GainAndReadoutNoisePage(wx.Panel):

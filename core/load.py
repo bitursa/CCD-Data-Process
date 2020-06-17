@@ -18,7 +18,8 @@ def getData(MainFrame, path):
         roi_height = int(MainFrame.roi_heightCtrl.GetValue())
 
     # 判断文件路径
-    if not os.path.isfile(path) or not path.endswith(".fits") or not path.endswith(".raw"):
+    # if not os.path.isfile(path) or not path.endswith(".fits") or not path.endswith(".raw"):
+    if not os.path.isfile(path):
         dlg = wx.MessageDialog(None, "无效路径！请选择一个文件（.fits or .raw)", caption="警告", style=wx.OK)
         dlg.ShowModal()
         return None
@@ -34,9 +35,9 @@ def getData(MainFrame, path):
     else:
         data = np.fromfile(path,dtype = dtype)
         data = data[skip:]
-        data = np.reshape(data,(width,height))
+        data = np.reshape(data,(height,width))
         if roiFlag:
-            data = data[roi_hOffset: roi_hOffset+roi_width, roi_vOffset:roi_vOffset+roi_height]
+            data = data[ roi_vOffset:roi_vOffset+roi_height, roi_hOffset: roi_hOffset+roi_width]
 
     return data
 
