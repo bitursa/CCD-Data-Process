@@ -1,5 +1,6 @@
 import wx
 import core.draw as draw
+import core.load as load
 import os
 
 class MainFrame(wx.Frame):
@@ -51,13 +52,13 @@ class MainFrame(wx.Frame):
         self.ft = wx.StaticBox(self.UpPanel, -1, 'Size Format')
         self.ftSizer = wx.StaticBoxSizer(self.ft, wx.VERTICAL)
         self.sfSizer = wx.GridBagSizer(0,0)
-        #dtype控件
+        # dtype控件
         self.sf_dtypeText = wx.StaticText(self.UpPanel, -1, "dtype")
         self.sfSizer.Add(self.sf_dtypeText, pos = (0,0), flag=wx.EXPAND |wx.ALL, border=3)
         self.sf_dtypeSuffix = ['uint16', '>H', '<H', 'float']
         self.sf_dtypeCtrl = wx.ComboBox(self.UpPanel, choices=self.sf_dtypeSuffix, value=self.sf_dtypeSuffix[0])
         self.sfSizer.Add(self.sf_dtypeCtrl,pos=(1,0), flag=wx.EXPAND | wx.ALL, border=3)
-        #skip控件
+        # skip控件
         self.sf_skipText = wx.StaticText(self.UpPanel, -1, "Skip")
         self.sf_skipCtrl = wx.TextCtrl(self.UpPanel)
         self.sf_skipCtrl.SetValue("0")
@@ -121,13 +122,13 @@ class MainFrame(wx.Frame):
         self.Boxh1.Add(self.roiSizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
         self.UpPanel.SetSizer(self.Boxh1)
 
-        #绑定事件
+        # 绑定事件
         self.Bind(wx.EVT_BUTTON, self.OnButton_Preview, self.fViewButton)
 
     def Init_DownPanel(self):
         self.DownBoxh = wx.BoxSizer(wx.HORIZONTAL)
 
-        #创建文件路径 静态文本框
+        # 创建文件路径 静态文本框
         self.fileBox = wx.StaticBox(self.DownPanel,-1,"文件路径")
         self.fileBoxSizer = wx.StaticBoxSizer(self.fileBox, wx.VERTICAL)
 
@@ -161,15 +162,15 @@ class MainFrame(wx.Frame):
 
         # 创建标签页
         self.DownNoteBook = wx.Notebook(self.DownPanel, style=wx.NB_FIXEDWIDTH)
-        gain_rdnPage = GainAndReadoutNoisePage(self.DownNoteBook)
-        ptcPage = PTCPage(self.DownNoteBook)
-        darkcurrentPage = DarkCurrentPage(self.DownNoteBook)
-        prnuPage = PRNUPage(self.DownNoteBook)
+        self.gain_rdnPage = GainAndReadoutNoisePage(self.DownNoteBook)
+        self.ptcPage = PTCPage(self.DownNoteBook)
+        self.darkcurrentPage = DarkCurrentPage(self.DownNoteBook)
+        self.prnuPage = PRNUPage(self.DownNoteBook)
 
-        self.DownNoteBook.AddPage(gain_rdnPage, "增益 读出噪声")
-        self.DownNoteBook.AddPage(ptcPage, "PTC")
-        self.DownNoteBook.AddPage(darkcurrentPage, "暗电流")
-        self.DownNoteBook.AddPage(prnuPage, "PRNU")
+        self.DownNoteBook.AddPage(self.gain_rdnPage, "增益 读出噪声")
+        self.DownNoteBook.AddPage(self.ptcPage, "PTC")
+        self.DownNoteBook.AddPage(self.darkcurrentPage, "暗电流")
+        self.DownNoteBook.AddPage(self.prnuPage, "PRNU")
         
         # self.Boxv2.Add(self.DownNoteBook, 1, wx.EXPAND | wx.ALL, 10)
         # self.DownPanel.SetSizer(self.Boxv2)
@@ -178,21 +179,16 @@ class MainFrame(wx.Frame):
         self.DownPanel.SetSizer(self.DownBoxh)
 
         # 绑定事件 （PTC，gain，prnu，readoutNoise）
-        self.Bind(wx.EVT_BUTTON, self.OnButton, gain_rdnPage.rdn_button3)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Flat_OpenFile, self.file_button3)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Flat_OpenDir, self.file_button4)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Bias_OpenFile, self.file_button1)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Bias_OpenDir, self.file_button2)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenFile, self.file_button5)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenDir, self.file_button6)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_ReadoutNoiseCal, self.gain_rdnPage.rdn_button)
 
     def OnButton_Preview(self, Event):
-        filepath = self.fViewCtrl.GetPath()
-        dtype = self.sf_dtypeCtrl.GetValue()
-        skip = int(self.sf_skipCtrl.GetValue())
-        width = int(self.sf_widthCtrl.GetValue())
-        height = int(self.sf_heightCtrl.GetValue())
-        draw.preview(filepath,dtype,width,height,skip)
+        draw.preview(self)
 
     def OnButton_OpenFile(self):
         dlg = wx.FileDialog(self, '选择文件', style=wx.FD_DEFAULT_STYLE | wx.FD_CHANGE_DIR | wx.FD_MULTIPLE)
@@ -229,14 +225,14 @@ class MainFrame(wx.Frame):
             self.file_textCtrl1.Clear()
             for path in paths:
                 self.file_textCtrl1.AppendText(path+'\n')
-            self.biastfilePath = paths
+            self.biasfilePath = paths
 
     def OnButton_Bias_OpenDir(self, Event):
         path = self.OnButton_OpenDir()
         if path:
             self.file_textCtrl1.Clear()
             self.file_textCtrl1.SetValue(path)
-            self.biastfilePath = path
+            self.biasfilePath = path
 
     def OnButton_Dark_OpenFile(self, Event):
         paths = self.OnButton_OpenFile()
@@ -244,17 +240,31 @@ class MainFrame(wx.Frame):
             self.file_textCtrl3.Clear()
             for path in paths:
                 self.file_textCtrl3.AppendText(path + '\n')
-            self.darkfilePath = paths
 
     def OnButton_Dark_OpenDir(self, Event):
         path = self.OnButton_OpenDir()
         if path:
             self.file_textCtrl3.Clear()
             self.file_textCtrl3.SetValue(path)
-            self.darkfilePath = path
 
-    def OnButton(self, EVENT):
-        print(self.roiTrigger.GetValue())
+    def OnButton_GainCal(self, Event):
+        pass
+
+    def OnButton_ReadoutNoiseCal(self,Event):
+        if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        if not self.gain_rdnPage.rdn_textCtrl1.GetValue():
+            dlg = wx.MessageDialog(None, "请输入增益参数！", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        # load.getData(self, self.biasfilePath)
+
+
+
 
 class GainAndReadoutNoisePage(wx.Panel):
     def __init__(self, parent):
@@ -265,13 +275,13 @@ class GainAndReadoutNoisePage(wx.Panel):
         self.gainBoxSizer = wx.StaticBoxSizer(self.gainBox, wx.VERTICAL)
         self.gainSizer = wx.GridBagSizer(0, 0)
 
-        self.gain_FileText3 = wx.StaticText(self, -1, "增益（e-/ADU)")
-        self.gain_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
-        self.gain_button5 = wx.Button(self, -1, "计算...")
+        self.gain_FileText = wx.StaticText(self, -1, "增益（e-/ADU)")
+        self.gain_textCtrl = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT| wx.TE_READONLY)
+        self.gain_button = wx.Button(self, -1, "计算...")
 
-        self.gainSizer.Add(self.gain_FileText3, pos=(0,0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_textCtrl3, pos=(1,0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.gainSizer.Add(self.gain_button5, pos=(1,1), flag=wx.ALL | wx.EXPAND, border=3)
+        self.gainSizer.Add(self.gain_FileText, pos=(0,0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.gainSizer.Add(self.gain_textCtrl, pos=(1,0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.gainSizer.Add(self.gain_button, pos=(1,1), flag=wx.ALL | wx.EXPAND, border=3)
         self.gainBoxSizer.Add(self.gainSizer, 1, wx.EXPAND | wx.ALL, 0)
 
         # 创建readout Noise 组件
@@ -279,17 +289,17 @@ class GainAndReadoutNoisePage(wx.Panel):
         self.rdnBoxSizer = wx.StaticBoxSizer(self.rdnBox, wx.VERTICAL)
         self.rdnSizer = wx.GridBagSizer(0, 0)
 
-        self.rdn_FileText2 = wx.StaticText(self, -1, "增益（e-/ADU)")
-        self.rdn_textCtrl2 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
-        self.rdn_FileText3 = wx.StaticText(self, -1, "读出噪声结果 (e-)")
-        self.rdn_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
-        self.rdn_button3 = wx.Button(self, -1, "计算...")
+        self.rdn_FileText1 = wx.StaticText(self, -1, "增益（e-/ADU)")
+        self.rdn_textCtrl1 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
+        self.rdn_FileText2 = wx.StaticText(self, -1, "读出噪声结果 (e-)")
+        self.rdn_textCtrl2 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
+        self.rdn_button = wx.Button(self, -1, "计算...")
 
-        self.rdnSizer.Add(self.rdn_FileText2, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_textCtrl2, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_FileText3, pos=(2, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_textCtrl3, pos=(3, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.rdnSizer.Add(self.rdn_button3, pos=(3, 1), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_FileText1, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_textCtrl1, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_FileText2, pos=(2, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_textCtrl2, pos=(3, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_button, pos=(3, 1), flag=wx.ALL | wx.EXPAND, border=3)
         self.rdnBoxSizer.Add(self.rdnSizer, 1, wx.EXPAND | wx.ALL, 0)
 
         self.Box.Add(self.gainBoxSizer, 1, wx.EXPAND |wx.ALL, 10)

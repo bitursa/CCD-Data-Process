@@ -1,22 +1,13 @@
-import numpy as np
-import wx
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
-import  astropy.io.fits as pyfits
-import os
+import core.load as load
+import numpy as np
 
-def preview(filepath, dtype, width, height, skip=0):
-    if not os.path.isfile(filepath):
-        dlg = wx.MessageDialog(None, "无效路径！请选择一个文件（.fits or .raw)", caption="警告", style=wx.OK)
-        dlg.ShowModal()
-        return
-
-    if os.path.splitext(filepath)[-1] == ".fits" :
-        data = pyfits.getdata(filepath,dtype=dtype)
-    if os.path.splitext(filepath)[-1] == ".raw":
-        data = np.fromfile(filepath,dtype = dtype)
-        data = data[skip:]
-        data = np.reshape(data,(width,height))
+def preview(MainFrame):
+    filepath = MainFrame.fViewCtrl.GetPath()
+    data = load.getData(MainFrame, filepath)
+    if data is None:
+         return
 
     fig = plt.figure()
     ax = fig.add_subplot()
