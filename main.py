@@ -57,7 +57,7 @@ class MainFrame(wx.Frame):
         # dtype控件
         self.sf_dtypeText = wx.StaticText(self.UpPanel, -1, "dtype")
         self.sfSizer.Add(self.sf_dtypeText, pos = (0,0), flag=wx.EXPAND |wx.ALL, border=3)
-        self.sf_dtypeSuffix = ['uint16', '>H', '<H', 'float']
+        self.sf_dtypeSuffix = ['uint16', '>H', '<H', 'float','>f4',"<f4"]
         self.sf_dtypeCtrl = wx.ComboBox(self.UpPanel, choices=self.sf_dtypeSuffix, value=self.sf_dtypeSuffix[0])
         self.sfSizer.Add(self.sf_dtypeCtrl,pos=(1,0), flag=wx.EXPAND | wx.ALL, border=3)
         # skip控件
@@ -267,11 +267,11 @@ class MainFrame(wx.Frame):
             dlg = wx.MessageDialog(None, "请输入参数： 增益 ", caption="警告", style=wx.OK)
             dlg.ShowModal()
             return
-        gain = float(self.gain_rdnPage.rdn_textCtrl1.GetValue())
-        res = items.ReadoutNoiseProcess(self, self.biasfilePath, gain)
+
+        res = items.ReadoutNoiseProcess(self)
 
         # 显示结果
-        self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
+        # self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
 
 
 class GainAndReadoutNoisePage(wx.Panel):
@@ -301,10 +301,14 @@ class GainAndReadoutNoisePage(wx.Panel):
         self.rdn_textCtrl1 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
         self.rdn_FileText2 = wx.StaticText(self, -1, "读出噪声结果 (e-)")
         self.rdn_textCtrl2 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
+        self.rdn_FileText3 = wx.StaticText(self, -1, "nclip")
+        self.rdn_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
         self.rdn_button = wx.Button(self, -1, "计算...")
 
         self.rdnSizer.Add(self.rdn_FileText1, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
         self.rdnSizer.Add(self.rdn_textCtrl1, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_FileText3, pos=(0, 1), flag=wx.ALL | wx.EXPAND, border=3)
+        self.rdnSizer.Add(self.rdn_textCtrl3, pos=(1, 1), flag=wx.ALL | wx.EXPAND, border=3)
         self.rdnSizer.Add(self.rdn_FileText2, pos=(2, 0), flag=wx.ALL | wx.EXPAND, border=3)
         self.rdnSizer.Add(self.rdn_textCtrl2, pos=(3, 0), flag=wx.ALL | wx.EXPAND, border=3)
         self.rdnSizer.Add(self.rdn_button, pos=(3, 1), flag=wx.ALL | wx.EXPAND, border=3)
