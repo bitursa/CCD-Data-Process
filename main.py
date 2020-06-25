@@ -254,7 +254,17 @@ class MainFrame(wx.Frame):
             self.file_textCtrl3.SetValue(path)
 
     def OnButton_GainCal(self, Event):
-        pass
+        if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        if not hasattr(self, 'flatfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        res = items.gain_process(self)
 
     def OnButton_ReadoutNoiseCal(self, Event):
         if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
@@ -272,7 +282,7 @@ class MainFrame(wx.Frame):
             dlg.ShowModal()
             return
 
-        res = items.ReadoutNoiseProcess(self)
+        res = items.readout_noise_process(self)
 
         # 显示结果
         # self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
