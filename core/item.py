@@ -217,16 +217,16 @@ def ptc_process(mainFrame):
         index += 1
 
     # 找拐点
-    argMax = PTC_arr[1,:].argmax()
-    PTC_arr_fit = PTC_arr[:, :argMax]
+    argMax = PTC_arr[1, :].argmax()
+    PTC_arr_fit = PTC_arr[:, :argMax+1]
 
     # 拟合
     X_fit = PTC_arr_fit[0, :]
     Y_fit = PTC_arr_fit[1, :]
     Z_fit = np.polyfit(X_fit, Y_fit, 1)
     # 原始数据
-    X_origin = PTC_arr[0, :argMax]
-    Y_origin = PTC_arr[1, :argMax]
+    X_origin = PTC_arr[0, :argMax+1]
+    Y_origin = PTC_arr[1, :argMax+1]
 
     # z[0]为曲线斜率， 1/z[0]为增益
     gain = 1 / Z_fit[0]
@@ -241,28 +241,56 @@ def ptc_process(mainFrame):
     delta = np.array(delta, dtype=float)
     none_linearity = np.mean(np.abs(delta))
 
+    #  响应非线性度
+    maxExposure = float(mainFrame.ptcPage.ptc_textCtrl1.GetValue())
+    length = PTC_arr.shape[1]
+    arr_exposure = np.linspace(0, maxExposure, length)
+    coord_max = PTC_arr[0, :].argmax()
+    response_x = arr_exposure[:coord_max+1]
+    response_y = PTC_arr[0, :coord_max+1]
+    response_fit = np.polyfit(response_x, response_y, 1)
+    response_poly = np.poly1d(response_fit)
+    response_yp = response_poly(response_x)
+    res_non_linearity = np.mean((response_y-response_yp) / response_yp)
+
     # 显示结果
     mainFrame.ptcPage.ptc_textCtrl3.SetValue(str(round(gain, 4)))
     mainFrame.ptcPage.ptc_textCtrl4.SetValue(str(round(readout_noise, 4)))
     mainFrame.ptcPage.ptc_textCtrl5.SetValue(str(round(fullWellCapacity, 2)))
-    mainFrame.ptcPage.ptc_textCtrl6.SetValue(str(round(none_linearity, 2)))
+    mainFrame.ptcPage.ptc_textCtrl6.SetValue(str(np.abs(round(none_linearity, 2))))
+    mainFrame.ptcPage.ptc_textCtrl7.SetValue(str(np.abs(round(res_non_linearity, 2))))
 
     # 作图
-    # PTC
-    plt.figure(1)
-    plt.plot(PTC_arr[0, :], PTC_arr[1, :], 'b*', X_origin, p(X_origin), 'r--')
-    plt.xlabel('Mean(ADU)')
-    plt.ylabel('Variance')
-    plt.title('PTC')
+    if mainFrame.ptcPage.ptc_plot_trigger.GetValue():
+        # PTC
+        plt.figure(1)
+        plt.plot(PTC_arr[0, :], PTC_arr[1, :], 'b*', X_origin, p(X_origin), 'r--')
+        plt.xlabel('Mean(ADU)')
+        plt.ylabel('Variance')
+        plt.title('PTC')
 
-    # PTC non-linearity
-    plt.figure(2)
-    plt.plot(X_origin, delta, 'b*', X_origin, np.zeros(len(X_origin)), 'r--')
-    plt.xlabel('Mean(ADU)')
-    plt.ylabel('Non-linearity')
-    plt.title('PTC Non-linearity')
-    # plt.close(2)
-    plt.show()
+        # PTC non-linearity
+        plt.figure(2)
+        plt.plot(X_origin, delta, 'b*', X_origin, np.zeros(len(X_origin)), 'r--')
+        plt.xlabel('Mean(ADU)')
+        plt.ylabel('Non-linearity')
+        plt.title('PTC Non-linearity')
+
+        # PTC response
+        plt.figure(3)
+        plt.plot(arr_exposure, PTC_arr[0, :], "b*", response_x, response_yp, 'r--')
+        plt.xlabel('Exposure Time / (s)')
+        plt.ylabel('Signal / MeanValue')
+        plt.title('PTC Response')
+
+        # PTC response non-
+        plt.figure(4)
+        plt.plot(response_x, (response_y-response_yp)/response_yp, 'b*', response_x, np.zeros(len(response_x)), 'r--')
+        plt.xlabel('Exposure Time / (s)')
+        plt.ylabel('Non-linearity')
+        plt.title('Response Non-linearity')
+
+        plt.show()
     return
 
 
