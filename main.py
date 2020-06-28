@@ -193,6 +193,8 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenDir, self.file_button6)
         self.Bind(wx.EVT_BUTTON, self.OnButton_ReadoutNoiseCal, self.gain_rdnPage.rdn_button)
         self.Bind(wx.EVT_BUTTON, self.OnButton_DarkCurrentCal, self.darkcurrentPage.dc_button)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_GainCal, self.gain_rdnPage.gain_button)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_ptc_process, self.ptcPage.ptc_button5)
 
     def OnButton_Preview(self, Event):
         draw.preview(self)
@@ -256,6 +258,8 @@ class MainFrame(wx.Frame):
             self.file_textCtrl3.SetValue(path)
             self.darkfilePath = path
 
+    #######################################################################################
+    # 按钮功能
     def OnButton_GainCal(self, Event):
         if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
             dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
@@ -280,10 +284,7 @@ class MainFrame(wx.Frame):
             dlg.ShowModal()
             return
 
-        res = items.readout_noise_process(self)
-
-        # 显示结果
-        # self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
+        items.readout_noise_process(self)
 
     def OnButton_DarkCurrentCal(self, Event):
         if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
@@ -296,10 +297,20 @@ class MainFrame(wx.Frame):
             dlg.ShowModal()
             return
 
-        res = items.dark_current_process(self)
+        items.dark_current_process(self)
 
-        # 显示结果
-        # self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
+    def OnButton_ptc_process(self, Event):
+        if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        if not hasattr(self, 'flatfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        items.ptc_process(self)
 
 
 class GainAndReadoutNoisePage(wx.Panel):

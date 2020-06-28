@@ -78,15 +78,192 @@ def readout_noise_process(mainFrame):
 
     plt.show()
 
-    return res
+    return
 
 
 def gain_process(mainFrame):
-    pass
+    bias_path = mainFrame.biasfilePath
+    flat_path = mainFrame.flatfilePath
+    bias_files = []
+    flat_files = []
+    if isinstance(bias_path, str):
+        # 输入路径为str，即目录
+        for bias_file in os.listdir(bias_path):
+            bias_files.append(os.path.join(bias_path, bias_file))
+
+    if isinstance(bias_path, list):
+        # 输入路径为list, 即文件名
+        bias_files = bias_path
+
+    if isinstance(flat_path, str):
+        # 输入路径为str，即目录
+        for flat_file in os.listdir(flat_path):
+            flat_files.append(os.path.join(flat_path, flat_file))
+
+    if isinstance(flat_path, list):
+        # 输入路径为list, 即文件名
+        flat_files = flat_path
+
+    bias_tmp = []
+    flat_tmp = []
+
+    # 读取本底场图像
+    for bias_file in bias_files:
+        each_data = load.getData(mainFrame, bias_file)
+        # 多个三维fits 堆叠待解决
+        if each_data.ndim > 2:
+            # arr = np.concatenate((arr, each_data))
+            bias_tmp = each_data
+        else:
+            bias_tmp.append(each_data)
+    # 读取平场图像
+    for flat_file in flat_files:
+        each_data = load.getData(mainFrame, flat_file)
+        # 多个三维fits 堆叠待解决
+        if each_data.ndim > 2:
+            # arr = np.concatenate((arr, each_data))
+            flat_tmp = each_data
+        else:
+            flat_tmp.append(each_data)
+    # 图像堆叠转为array
+    bias_data = np.array(bias_tmp, dtype=float)
+    flat_data = np.array(flat_tmp, dtype=float)
+
+    # 选择两幅平均值最接近的图像
+    bias1, bias2 = load.im_select(bias_data)
+    flat1, flat2 = load.im_select(flat_data)
+
+    bias_diff = bias1 - bias2
+    flat_diff = flat1 - flat2
+
+    bias_dif_var = np.var(bias_diff)
+    flat_diff_var = np.var(flat_diff)
+
+    # 计算增益
+    gain = (np.mean(flat1)+np.mean(flat2)-np.mean(bias1)-np.mean(bias2)) / (flat_diff_var - bias_dif_var)
+
+    # 显示结果
+    mainFrame.gain_rdnPage.gain_textCtrl.SetValue(str(round(gain, 3)))
+    return
 
 
 def ptc_process(mainFrame):
-    pass
+    bias_path = mainFrame.biasfilePath
+    flat_path = mainFrame.flatfilePath
+    bias_files = []
+    flat_files = []
+    if isinstance(bias_path, str):
+        # 输入路径为str，即目录
+        for bias_file in os.listdir(bias_path):
+            bias_files.append(os.path.join(bias_path, bias_file))
+
+    if isinstance(bias_path, list):
+        # 输入路径为list, 即文件名
+        bias_files = bias_path
+
+    if isinstance(flat_path, str):
+        # 输入路径为str，即目录
+        for flat_file in os.listdir(flat_path):
+            flat_files.append(os.path.join(flat_path, flat_file))
+
+    if isinstance(flat_path, list):
+        # 输入路径为list, 即文件名
+        flat_files = flat_path
+
+    bias_tmp = []
+    flat_tmp = []
+
+    # 读取本底场图像
+    for bias_file in bias_files:
+        each_data = load.getData(mainFrame, bias_file)
+        # 多个三维fits 堆叠待解决
+        if each_data.ndim > 2:
+            # arr = np.concatenate((arr, each_data))
+            bias_tmp = each_data
+        else:
+            bias_tmp.append(each_data)
+    # 图像堆叠转为array
+    bias_data = np.array(bias_tmp, dtype=float)
+    # 选择两幅平均值最接近的图像
+    bias1, bias2 = load.im_select(bias_data)
+    bias_mean = (np.mean(bias1) + np.mean(bias2)) / 2
+    bias_var = np.var(bias1 - bias2) / 2
+
+    # 读取平场图像
+    PTC_arr = np.zeros((2, len(flat_files)))
+    index = 0
+
+    for flat_file in flat_files:
+        flat_tmp = []
+        if os.path.isdir(flat_file):
+            for item in os.listdir(flat_file):
+                tmp_path = os.path.join(flat_file, item)
+                flat_tmp.append(load.getData(mainFrame, tmp_path))
+        else:
+            each_data = load.getData(mainFrame, flat_file)
+            # 多个三维fits 堆叠待解决
+            if each_data.ndim > 2:
+                # arr = np.concatenate((arr, each_data))
+                flat_tmp = each_data
+            else:
+                flat_tmp.append(each_data)
+        flat_data = np.array(flat_tmp, dtype=float)
+        flat1, flat2 = load.im_select(flat_data)
+        flat_mean = (np.mean(flat1) + np.mean(flat2)) / 2
+        flat_var = np.var(flat1 - flat2) / 2
+
+        PTC_arr[0, index] = flat_mean - bias_mean
+        PTC_arr[1, index] = flat_var - bias_var
+        index += 1
+
+    # 找拐点
+    argMax = PTC_arr[1,:].argmax()
+    PTC_arr_fit = PTC_arr[:, :argMax]
+
+    # 拟合
+    X_fit = PTC_arr_fit[0, :]
+    Y_fit = PTC_arr_fit[1, :]
+    Z_fit = np.polyfit(X_fit, Y_fit, 1)
+    # 原始数据
+    X_origin = PTC_arr[0, :argMax]
+    Y_origin = PTC_arr[1, :argMax]
+
+    # z[0]为曲线斜率， 1/z[0]为增益
+    gain = 1 / Z_fit[0]
+    readout_noise = np.sqrt(bias_var)*gain
+    fullWellCapacity = gain * PTC_arr[0, argMax]
+
+    # PTC 非线性度
+    p = np.poly1d(Z_fit)
+    delta = []
+    for i in range(len(X_origin)):
+        delta.append((Y_origin[i] - p(X_origin[i])) / p(X_origin[i]))
+    delta = np.array(delta, dtype=float)
+    none_linearity = np.mean(np.abs(delta))
+
+    # 显示结果
+    mainFrame.ptcPage.ptc_textCtrl3.SetValue(str(round(gain, 4)))
+    mainFrame.ptcPage.ptc_textCtrl4.SetValue(str(round(readout_noise, 4)))
+    mainFrame.ptcPage.ptc_textCtrl5.SetValue(str(round(fullWellCapacity, 2)))
+    mainFrame.ptcPage.ptc_textCtrl6.SetValue(str(round(none_linearity, 2)))
+
+    # 作图
+    # PTC
+    plt.figure(1)
+    plt.plot(PTC_arr[0, :], PTC_arr[1, :], 'b*', X_origin, p(X_origin), 'r--')
+    plt.xlabel('Mean(ADU)')
+    plt.ylabel('Variance')
+    plt.title('PTC')
+
+    # PTC non-linearity
+    plt.figure(2)
+    plt.plot(X_origin, delta, 'b*', X_origin, np.zeros(len(X_origin)), 'r--')
+    plt.xlabel('Mean(ADU)')
+    plt.ylabel('Non-linearity')
+    plt.title('PTC Non-linearity')
+    # plt.close(2)
+    plt.show()
+    return
 
 
 def dark_current_process(mainFrame):
@@ -171,6 +348,7 @@ def dark_current_process(mainFrame):
     mainFrame.darkcurrentPage.dc_textCtrl5.SetValue(str(round(ratio_over4x, 5)))
     mainFrame.darkcurrentPage.dc_textCtrl6.SetValue(",".join(hot_pixel_row))
     mainFrame.darkcurrentPage.dc_textCtrl6.SetValue(",".join(hot_pixel_col))
+    return
 
 
 def prnu_process(mainFrame):

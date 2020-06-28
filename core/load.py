@@ -51,14 +51,16 @@ def im_select(data):
     """
     mean_value = []
     img_diff = []
-    for dat in data:
-        mean_value.append(np.mean(data))
+    length = data.shape[0]
+    for i in range(length):
+        mean_value.append(np.mean(data[i, :, :]))
 
+    mean_value = np.array(mean_value,dtype=float)
     sort_Mean = np.sort(mean_value)
     sort_Arg = np.argsort(mean_value)
 
-    for i in range(len(data) - 1):
-        img_diff.append(sort_Mean[i + 1] - sort_Mean[i])
+    for i in range(length - 1):
+        img_diff.append(sort_Mean[i+1] - sort_Mean[i])
 
     res = np.argsort(img_diff)
     arg1 = res[0]
