@@ -192,6 +192,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenFile, self.file_button5)
         self.Bind(wx.EVT_BUTTON, self.OnButton_Dark_OpenDir, self.file_button6)
         self.Bind(wx.EVT_BUTTON, self.OnButton_ReadoutNoiseCal, self.gain_rdnPage.rdn_button)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_DarkCurrentCal, self.darkcurrentPage.dc_button)
 
     def OnButton_Preview(self, Event):
         draw.preview(self)
@@ -246,12 +247,14 @@ class MainFrame(wx.Frame):
             self.file_textCtrl3.Clear()
             for path in paths:
                 self.file_textCtrl3.AppendText(path + '\n')
+            self.darkfilePath = paths
 
     def OnButton_Dark_OpenDir(self, Event):
         path = self.OnButton_OpenDir()
         if path:
             self.file_textCtrl3.Clear()
             self.file_textCtrl3.SetValue(path)
+            self.darkfilePath = path
 
     def OnButton_GainCal(self, Event):
         if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
@@ -277,12 +280,23 @@ class MainFrame(wx.Frame):
             dlg.ShowModal()
             return
 
-        if not self.gain_rdnPage.rdn_textCtrl3.GetValue():
-            dlg = wx.MessageDialog(None, "请输入参数： nclip ", caption="警告", style=wx.OK)
+        res = items.readout_noise_process(self)
+
+        # 显示结果
+        # self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
+
+    def OnButton_DarkCurrentCal(self, Event):
+        if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "Bias 无效路径!", caption="警告", style=wx.OK)
             dlg.ShowModal()
             return
 
-        res = items.readout_noise_process(self)
+        if not hasattr(self, 'darkfilePath') or not self.darkfilePath:
+            dlg = wx.MessageDialog(None, "Dark 无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        res = items.dark_current_process(self)
 
         # 显示结果
         # self.gain_rdnPage.rdn_textCtrl2.SetValue(str(round(res,3)))
@@ -317,6 +331,7 @@ class GainAndReadoutNoisePage(wx.Panel):
         self.rdn_textCtrl2 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.rdn_FileText3 = wx.StaticText(self, -1, "nclip")
         self.rdn_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
+        self.rdn_textCtrl3.SetValue("0")
         self.rdn_button = wx.Button(self, -1, "计算...")
 
         self.rdnSizer.Add(self.rdn_FileText1, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
@@ -368,35 +383,45 @@ class DarkCurrentPage(wx.Panel):
         super(DarkCurrentPage, self).__init__(parent)
         # wx.Panel.__init__(self,parent)
         # 创建darkcurrent 组件
-        self.darkcurrentSizer = wx.GridBagSizer(0, 0)
+        self.darkCurrentSizer = wx.GridBagSizer(0, 0)
 
-        self.dc_FileText3 = wx.StaticText(self, -1, "增益 (e-/ADU)")
-        self.dc_FileText4 = wx.StaticText(self, -1, "暗电流 (e-)")
-        self.dc_FileText5 = wx.StaticText(self, -1, "热像元数量")
-        self.dc_FileText6 = wx.StaticText(self, -1, "热像元比例")
-        self.dc_FileText7 = wx.StaticText(self, -1, "热像元行/列")
+        self.dc_FileText1 = wx.StaticText(self, -1, "增益 (e-/ADU)")
+        self.dc_FileText2 = wx.StaticText(self, -1, "积分时间(s)")
+        self.dc_FileText3 = wx.StaticText(self, -1, "暗电流 (e-/(pix·s))")
+        self.dc_FileText4 = wx.StaticText(self, -1, "热像元数量")
+        self.dc_FileText5 = wx.StaticText(self, -1, "超过4倍典型值热像元比例")
+        self.dc_FileText6 = wx.StaticText(self, -1, "热像元行")
+        self.dc_FileText7 = wx.StaticText(self, -1, "热像元列")
 
-        self.dc_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
+        self.dc_textCtrl1 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
+        self.dc_textCtrl2 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT)
+        self.dc_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.dc_textCtrl4 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.dc_textCtrl5 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
-        self.dc_textCtrl6 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
-        self.dc_textCtrl7 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
+        self.dc_textCtrl6 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY | wx.TE_MULTILINE)
+        self.dc_textCtrl7 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY | wx.TE_MULTILINE)
+        self.dc_textCtrl2.SetValue("1000")
 
-        self.dc_button5 = wx.Button(self, - 1, "计算...")
+        self.dc_button = wx.Button(self, -1, "计算...")
 
-        self.darkcurrentSizer.Add(self.dc_FileText3, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText4, pos=(2, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText5, pos=(2, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText6, pos=(4, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_FileText7, pos=(4, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl3, pos=(1, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl4, pos=(3, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl5, pos=(3, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl6, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_textCtrl7, pos=(5, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.darkcurrentSizer.Add(self.dc_button5, pos=(1, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText1, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText2, pos=(0, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText3, pos=(2, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText4, pos=(2, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText5, pos=(2, 2), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText6, pos=(4, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_FileText7, pos=(4, 1), flag=wx.EXPAND | wx.ALL, border=3)
 
-        self.SetSizerAndFit(self.darkcurrentSizer)
+        self.darkCurrentSizer.Add(self.dc_textCtrl1, pos=(1, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_textCtrl2, pos=(1, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_textCtrl3, pos=(3, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_textCtrl4, pos=(3, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_textCtrl5, pos=(3, 2), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_textCtrl6, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_textCtrl7, pos=(5, 1), flag=wx.EXPAND | wx.ALL, border=3)
+        self.darkCurrentSizer.Add(self.dc_button, pos=(5, 2), flag=wx.EXPAND | wx.ALL, border=3)
+
+        self.SetSizerAndFit(self.darkCurrentSizer)
 
 
 class PRNUPage(wx.Panel):

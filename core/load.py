@@ -3,6 +3,7 @@ import wx
 import astropy.io.fits as pyfits
 import os
 
+
 def getData(MainFrame, path):
     # 读取参数
     dtype = MainFrame.sf_dtypeCtrl.GetValue()
@@ -25,20 +26,51 @@ def getData(MainFrame, path):
         return None
 
     # 读取数据
-    if os.path.splitext(path)[-1] == ".fits" :
-        data = pyfits.getdata(path,dtype=dtype)
+    if os.path.splitext(path)[-1] == ".fits":
+        data = pyfits.getdata(path, dtype=dtype)
         # 设置roi
         if roiFlag:
-            data = data[:,roi_vOffset:roi_vOffset+roi_height, roi_hOffset: roi_hOffset+roi_width]
-
+            if data.ndim > 2:
+                data = data[:, roi_vOffset:roi_vOffset + roi_height, roi_hOffset: roi_hOffset + roi_width]
+            else:
+                data = data[roi_vOffset:roi_vOffset + roi_height, roi_hOffset: roi_hOffset + roi_width]
     # if os.path.splitext(path)[-1] == ".raw":
     else:
-        data = np.fromfile(path,dtype = dtype)
+        data = np.fromfile(path, dtype=dtype)
         data = data[skip:]
-        data = np.reshape(data,(height,width))
+        data = np.reshape(data, (height, width))
         if roiFlag:
-            data = data[ roi_vOffset:roi_vOffset+roi_height, roi_hOffset: roi_hOffset+roi_width]
+            data = data[roi_vOffset:roi_vOffset + roi_height, roi_hOffset: roi_hOffset + roi_width]
 
     return data
 
 
+def im_select(data):
+    """
+    选出平均值最近的两幅图像，并返回这两幅图像数据
+    """
+    mean_value = []
+    img_diff = []
+    for dat in data:
+        mean_value.append(np.mean(data))
+
+    sort_Mean = np.sort(mean_value)
+    sort_Arg = np.argsort(mean_value)
+
+    for i in range(len(data) - 1):
+        img_diff.append(sort_Mean[i + 1] - sort_Mean[i])
+
+    res = np.argsort(img_diff)
+    arg1 = res[0]
+    arg2 = arg1 + 1
+    sort1 = sort_Arg[arg1]
+    sort2 = sort_Arg[arg2]
+    return data[sort1], data[sort2]
+
+
+def im_combine(data):
+    data_sort = np.sort(data, axis=0)
+    data_clip = data_sort[:-1, :, :]
+    data_mean = np.mean(data_clip, axis=0)
+
+    return data_mean
