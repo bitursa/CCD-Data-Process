@@ -140,7 +140,7 @@ def gain_process(mainFrame):
     flat_diff_var = np.var(flat_diff)
 
     # 计算增益
-    gain = (np.mean(flat1)+np.mean(flat2)-np.mean(bias1)-np.mean(bias2)) / (flat_diff_var - bias_dif_var)
+    gain = (np.mean(flat1) + np.mean(flat2) - np.mean(bias1) - np.mean(bias2)) / (flat_diff_var - bias_dif_var)
 
     # 显示结果
     mainFrame.gain_rdnPage.gain_textCtrl.SetValue(str(round(gain, 3)))
@@ -218,19 +218,19 @@ def ptc_process(mainFrame):
 
     # 找拐点
     argMax = PTC_arr[1, :].argmax()
-    PTC_arr_fit = PTC_arr[:, :argMax+1]
+    PTC_arr_fit = PTC_arr[:, :argMax + 1]
 
     # 拟合
     X_fit = PTC_arr_fit[0, :]
     Y_fit = PTC_arr_fit[1, :]
     Z_fit = np.polyfit(X_fit, Y_fit, 1)
     # 原始数据
-    X_origin = PTC_arr[0, :argMax+1]
-    Y_origin = PTC_arr[1, :argMax+1]
+    X_origin = PTC_arr[0, :argMax + 1]
+    Y_origin = PTC_arr[1, :argMax + 1]
 
     # z[0]为曲线斜率， 1/z[0]为增益
     gain = 1 / Z_fit[0]
-    readout_noise = np.sqrt(bias_var)*gain
+    readout_noise = np.sqrt(bias_var) * gain
     fullWellCapacity = gain * PTC_arr[0, argMax]
 
     # PTC 非线性度
@@ -246,12 +246,12 @@ def ptc_process(mainFrame):
     length = PTC_arr.shape[1]
     arr_exposure = np.linspace(0, maxExposure, length)
     coord_max = PTC_arr[0, :].argmax()
-    response_x = arr_exposure[:coord_max+1]
-    response_y = PTC_arr[0, :coord_max+1]
+    response_x = arr_exposure[:coord_max + 1]
+    response_y = PTC_arr[0, :coord_max + 1]
     response_fit = np.polyfit(response_x, response_y, 1)
     response_poly = np.poly1d(response_fit)
     response_yp = response_poly(response_x)
-    res_non_linearity = np.mean((response_y-response_yp) / response_yp)
+    res_non_linearity = np.mean((response_y - response_yp) / response_yp)
 
     # 显示结果
     mainFrame.ptcPage.ptc_textCtrl3.SetValue(str(round(gain, 4)))
@@ -285,7 +285,8 @@ def ptc_process(mainFrame):
 
         # PTC response non-
         plt.figure(4)
-        plt.plot(response_x, (response_y-response_yp)/response_yp, 'b*', response_x, np.zeros(len(response_x)), 'r--')
+        plt.plot(response_x, (response_y - response_yp) / response_yp, 'b*', response_x, np.zeros(len(response_x)),
+                 'r--')
         plt.xlabel('Exposure Time / (s)')
         plt.ylabel('Non-linearity')
         plt.title('Response Non-linearity')
@@ -360,18 +361,18 @@ def dark_current_process(mainFrame):
     # 热像元个数
     coords = np.where(dark_res >= threshold_val)
     hot_pixel_num = coords[0].shape[0]
-    count_row = np.unique(coords[0],return_counts=True)
-    count_col = np.unique(coords[1],return_counts=True)
+    count_row = np.unique(coords[0], return_counts=True)
+    count_col = np.unique(coords[1], return_counts=True)
     # 热像元缺陷行列
     hot_pixel_row = count_row[0][np.where(count_row[1] > 100)]
     hot_pixel_col = count_col[0][np.where(count_col[1] > 100)]
 
     # 计算超过4倍典型值的像元比例
-    coord_hotPixel_over4x = np.where(dark_res > 4*res_darkCurrent)
+    coord_hotPixel_over4x = np.where(dark_res > 4 * res_darkCurrent)
     ratio_over4x = coord_hotPixel_over4x[0].shape[0] / dark_res.size
 
     # 显示结果
-    mainFrame.darkcurrentPage.dc_textCtrl3.SetValue(str(round(res_darkCurrent, 6)/time*gain))
+    mainFrame.darkcurrentPage.dc_textCtrl3.SetValue(str(round(res_darkCurrent, 6) / time * gain))
     mainFrame.darkcurrentPage.dc_textCtrl4.SetValue(str(hot_pixel_num))
     mainFrame.darkcurrentPage.dc_textCtrl5.SetValue(str(round(ratio_over4x, 5)))
     mainFrame.darkcurrentPage.dc_textCtrl6.SetValue(",".join(hot_pixel_row))
@@ -380,4 +381,66 @@ def dark_current_process(mainFrame):
 
 
 def prnu_process(mainFrame):
-    pass
+    bias_path = mainFrame.biasfilePath
+    flat_path = mainFrame.flatfilePath
+    bias_files = []
+    flat_files = []
+    if isinstance(bias_path, str):
+        # 输入路径为str，即目录
+        for bias_file in os.listdir(bias_path):
+            bias_files.append(os.path.join(bias_path, bias_file))
+
+    if isinstance(bias_path, list):
+        # 输入路径为list, 即文件名
+        bias_files = bias_path
+
+    if isinstance(flat_path, str):
+        # 输入路径为str，即目录
+        for flat_file in os.listdir(flat_path):
+            flat_files.append(os.path.join(flat_path, flat_file))
+
+    if isinstance(flat_path, list):
+        # 输入路径为list, 即文件名
+        flat_files = flat_path
+
+    bias_tmp = []
+    flat_tmp = []
+
+    # 读取本底场图像
+    for bias_file in bias_files:
+        each_data = load.getData(mainFrame, bias_file)
+        # 多个三维fits 堆叠待解决
+        if each_data.ndim > 2:
+            # arr = np.concatenate((arr, each_data))
+            bias_tmp = each_data
+        else:
+            bias_tmp.append(each_data)
+    # 读取平场图像
+    for flat_file in flat_files:
+        each_data = load.getData(mainFrame, flat_file)
+        # 多个三维fits 堆叠待解决
+        if each_data.ndim > 2:
+            # arr = np.concatenate((arr, each_data))
+            flat_tmp = each_data
+        else:
+            flat_tmp.append(each_data)
+    # 图像堆叠转为array
+    bias_data = np.array(bias_tmp, dtype=float)
+    flat_data = np.array(flat_tmp, dtype=float)
+
+    # 选择两幅平均值最接近的图像
+    bias1, bias2 = load.im_select(bias_data)
+    flat1, flat2 = load.im_select(flat_data)
+
+    bias_diff = bias1 - bias2
+    flat_diff = flat1 - flat2
+
+    bias_dif_var = np.var(bias_diff)
+    flat_diff_var = np.var(flat_diff)
+
+    res_prnu = np.sqrt(2) * np.sqrt(
+        np.var(flat1) + np.var(flat2) - np.var(bias1) - np.var(bias2) - (flat_diff_var - bias_dif_var)) \
+               / (np.mean(flat1) + np.mean(flat2) - np.mean(bias1) - np.mean(bias2))
+
+    mainFrame.prnuPage.prnu_textCtrl1.SetValue(str(round(res_prnu, 4)))
+    return

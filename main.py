@@ -194,7 +194,8 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnButton_ReadoutNoiseCal, self.gain_rdnPage.rdn_button)
         self.Bind(wx.EVT_BUTTON, self.OnButton_DarkCurrentCal, self.darkcurrentPage.dc_button)
         self.Bind(wx.EVT_BUTTON, self.OnButton_GainCal, self.gain_rdnPage.gain_button)
-        self.Bind(wx.EVT_BUTTON, self.OnButton_ptc_process, self.ptcPage.ptc_button5)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_ptc_process, self.ptcPage.ptc_button)
+        self.Bind(wx.EVT_BUTTON, self.OnButton_PRNUcal, self.prnuPage.prnu_button)
 
     def OnButton_Preview(self, Event):
         draw.preview(self)
@@ -310,7 +311,25 @@ class MainFrame(wx.Frame):
             dlg.ShowModal()
             return
 
+        if not self.ptcPage.ptc_textCtrl1.GetValue():
+            dlg = wx.MessageDialog(None, "请输入参数： 最长曝光时间", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
         items.ptc_process(self)
+
+    def OnButton_PRNUcal(self, Event):
+        if not hasattr(self, 'biasfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        if not hasattr(self, 'flatfilePath') or not self.biasfilePath:
+            dlg = wx.MessageDialog(None, "无效路径!", caption="警告", style=wx.OK)
+            dlg.ShowModal()
+            return
+
+        res = items.prnu_process(self)
 
 
 class GainAndReadoutNoisePage(wx.Panel):
@@ -379,7 +398,7 @@ class PTCPage(wx.Panel):
         self.ptc_textCtrl6 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
         self.ptc_textCtrl7 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
 
-        self.ptc_button5 = wx.Button(self, - 1, "计算...")
+        self.ptc_button = wx.Button(self, - 1, "计算...")
         self.ptc_plot_trigger = wx.CheckBox(self, -1, u"作图")
 
         self.ptcSizer.Add(self.ptc_FileText1, pos=(0, 0), flag=wx.EXPAND | wx.ALL, border=3)
@@ -394,7 +413,7 @@ class PTCPage(wx.Panel):
         self.ptcSizer.Add(self.ptc_textCtrl5, pos=(3, 2), flag=wx.EXPAND | wx.ALL, border=3)
         self.ptcSizer.Add(self.ptc_textCtrl6, pos=(5, 0), flag=wx.EXPAND | wx.ALL, border=3)
         self.ptcSizer.Add(self.ptc_textCtrl7, pos=(5, 1), flag=wx.EXPAND | wx.ALL, border=3)
-        self.ptcSizer.Add(self.ptc_button5, pos=(7, 0), flag=wx.EXPAND | wx.ALL, border=3)
+        self.ptcSizer.Add(self.ptc_button, pos=(7, 0), flag=wx.EXPAND | wx.ALL, border=3)
         self.ptcSizer.Add(self.ptc_plot_trigger, pos=(1, 1), flag=wx.EXPAND | wx.ALL, border=3)
 
         self.ptc_plot_trigger.SetValue(True)
@@ -454,13 +473,13 @@ class PRNUPage(wx.Panel):
         # 创建prnu 组件
         self.prnuSizer = wx.GridBagSizer(0, 0)
 
-        self.prnu_FileText3 = wx.StaticText(self, -1, "PRNU")
-        self.prnu_textCtrl3 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
-        self.prnu_button5 = wx.Button(self, -1, "计算...")
+        self.prnu_FileText1 = wx.StaticText(self, -1, "PRNU")
+        self.prnu_textCtrl1 = wx.TextCtrl(self, -1, style=wx.ALIGN_LEFT | wx.TE_READONLY)
+        self.prnu_button = wx.Button(self, -1, "计算...")
 
-        self.prnuSizer.Add(self.prnu_FileText3, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_textCtrl3, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
-        self.prnuSizer.Add(self.prnu_button5, pos=(1, 1), flag=wx.ALL | wx.EXPAND, border=3)
+        self.prnuSizer.Add(self.prnu_FileText1, pos=(0, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.prnuSizer.Add(self.prnu_textCtrl1, pos=(1, 0), flag=wx.ALL | wx.EXPAND, border=3)
+        self.prnuSizer.Add(self.prnu_button, pos=(1, 1), flag=wx.ALL | wx.EXPAND, border=3)
         self.SetSizer(self.prnuSizer)
 
 
