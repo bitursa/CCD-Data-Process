@@ -13,7 +13,7 @@
 
 #### 使用说明
 
-![image-20200629105238967](C:\Users\Ursa\AppData\Roaming\Typora\typora-user-images\image-20200629105238967.png)
+![image](https://github.com/bitursa/CCD-Data-Process/blob/master/img/panel.png)
 
 1. 程序主要分为三个面板：设置面板（上）、文件路径面板（左下）和计算面板（右下）。
 2. **文件预览** ： 可以实现打开单个图像文件(单帧或多帧)预览的功能，需要先设置Size Format属性（必须），ROI设置可选。
