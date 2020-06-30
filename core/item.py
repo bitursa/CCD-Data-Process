@@ -264,29 +264,37 @@ def ptc_process(mainFrame):
     if mainFrame.ptcPage.ptc_plot_trigger.GetValue():
         # PTC
         plt.figure(1)
-        plt.plot(PTC_arr[0, :], PTC_arr[1, :], 'b*', X_origin, p(X_origin), 'r--')
+        l1, = plt.plot(PTC_arr[0, :], PTC_arr[1, :], 'b*', label='Original Data')
+        l2, = plt.plot(X_origin, p(X_origin), 'r--', label='Fit Curve')
+        plt.legend(loc='best')
         plt.xlabel('Mean(ADU)')
         plt.ylabel('Variance')
+        plt.legend(loc='best')
         plt.title('PTC')
 
         # PTC non-linearity
         plt.figure(2)
-        plt.plot(X_origin, delta, 'b*', X_origin, np.zeros(len(X_origin)), 'r--')
+        l1, = plt.plot(X_origin, delta, 'b*', label='Non-linearity')
+        l2, = plt.plot(X_origin, np.zeros(len(X_origin)), 'r--', label='zero line')
+        plt.legend(loc='best')
         plt.xlabel('Mean(ADU)')
         plt.ylabel('Non-linearity')
         plt.title('PTC Non-linearity')
 
         # PTC response
         plt.figure(3)
-        plt.plot(arr_exposure, PTC_arr[0, :], "b*", response_x, response_yp, 'r--')
+        l1, = plt.plot(arr_exposure, PTC_arr[0, :], "b*", label='Fit Curve')
+        l2, = plt.plot(response_x, response_yp, 'r--', label='Original Data')
+        plt.legend(loc='best')
         plt.xlabel('Exposure Time / (s)')
         plt.ylabel('Signal / MeanValue')
         plt.title('PTC Response')
 
         # PTC response non-
         plt.figure(4)
-        plt.plot(response_x, (response_y - response_yp) / response_yp, 'b*', response_x, np.zeros(len(response_x)),
-                 'r--')
+        l1, = plt.plot(response_x, (response_y - response_yp) / response_yp, 'b*', label='Non-linearity')
+        l2, = plt.plot(response_x, np.zeros(len(response_x)), 'r--', label='zero line')
+        plt.legend(loc='best')
         plt.xlabel('Exposure Time / (s)')
         plt.ylabel('Non-linearity')
         plt.title('Response Non-linearity')
