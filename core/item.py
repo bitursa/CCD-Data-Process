@@ -245,7 +245,7 @@ def ptc_process(mainFrame):
     maxExposure = float(mainFrame.ptcPage.ptc_textCtrl1.GetValue())
     length = PTC_arr.shape[1]
     arr_exposure = np.linspace(0, maxExposure, length)
-    coord_max = PTC_arr[0, :].argmax()
+    coord_max = PTC_arr[1, :].argmax()
     response_x = arr_exposure[:coord_max + 1]
     response_y = PTC_arr[0, :coord_max + 1]
     response_fit = np.polyfit(response_x, response_y, 1)
@@ -283,8 +283,8 @@ def ptc_process(mainFrame):
 
         # PTC response
         plt.figure(3)
-        l1, = plt.plot(arr_exposure, PTC_arr[0, :], "b*", label='Fit Curve')
-        l2, = plt.plot(response_x, response_yp, 'r--', label='Original Data')
+        l1, = plt.plot(arr_exposure, PTC_arr[0, :], "b*", label='Original Data')
+        l2, = plt.plot(response_x, response_yp, 'r--', label='Fit Curve')
         plt.legend(loc='best')
         plt.xlabel('Exposure Time / (s)')
         plt.ylabel('Signal / MeanValue')
